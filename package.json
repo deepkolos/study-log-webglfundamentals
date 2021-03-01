@@ -1,0 +1,27 @@
+{
+  "name": "study-log-webglfundamentals",
+  "version": "1.0.0",
+  "description": "计划：每天至少看一小节，一章学完联想应用，Github 打卡签到",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node esbuild -D",
+    "srv": "http-server . --port=2233",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deepkolos/study-log-webglfundamentals.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/deepkolos/study-log-webglfundamentals/issues"
+  },
+  "homepage": "https://github.com/deepkolos/study-log-webglfundamentals#readme",
+  "devDependencies": {
+    "esbuild": "^0.8.54",
+    "esbuild-plugin-glsl": "^1.0.3",
+    "http-server": "^0.12.3"
+  }
+}
