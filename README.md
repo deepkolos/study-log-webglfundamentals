@@ -6,4 +6,5 @@
 2021-3-2: WebGL 工作原理 简单笔记，没有敲代码\
 2021-3-3: WebGL 着色器与 GLSL\
 2021-3-4: WebGL State Diagram，交互程序，了解WebGL的内部状态\
-2021-3-6: WebGL基础概念小结，并编写PPT
+2021-3-6: WebGL 基础概念小结，并编写PPT\
+2021-3-8: WebGL 平移\
