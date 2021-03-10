@@ -1,8 +1,8 @@
 (() => {
-  // 2-二维平移，旋转，缩放和矩阵运算/WebGL 二维旋转/vert.glsl
-  var vert_default = "attribute vec2 a_position;\nattribute vec2 a_texcoord;\n\nvarying vec2 v_texcoord;\n\nuniform vec2 u_resolution;\nuniform vec2 u_translation;\nuniform vec2 u_rotation;\n\nvoid main() {\n  vec2 rotatedPos = vec2(\n    a_position.x * u_rotation.y + a_position.y * u_rotation.x,\n    a_position.y * u_rotation.y - a_position.x * u_rotation.x\n  );\n  vec2 pos = (rotatedPos / u_resolution + u_translation) * 2.0 - 1.0;\n  pos *= vec2(1.0, -1.0);\n  gl_Position = vec4(pos, 0, 1);\n  v_texcoord = a_texcoord;\n}";
+  // 2-二维平移，旋转，缩放和矩阵运算/WebGL 二维缩放/vert.glsl
+  var vert_default = "attribute vec2 a_position;\nattribute vec2 a_texcoord;\n\nvarying vec2 v_texcoord;\n\nuniform vec2 u_resolution;\nuniform vec2 u_translation;\nuniform vec2 u_rotation;\nuniform vec2 u_scale;\n\nvoid main() {\n  // \u7F29\u653E\n  vec2 scaledPosition = a_position * u_scale;\n\n  // \u65CB\u8F6C\n  vec2 rotatedPos = vec2(\n    scaledPosition.x * u_rotation.y + scaledPosition.y * u_rotation.x,\n    scaledPosition.y * u_rotation.y - scaledPosition.x * u_rotation.x\n  );\n  vec2 pos = (rotatedPos / u_resolution + u_translation) * 2.0 - 1.0;\n  pos *= vec2(1.0, -1.0);\n  gl_Position = vec4(pos, 0, 1);\n  v_texcoord = a_texcoord;\n}";
 
-  // 2-二维平移，旋转，缩放和矩阵运算/WebGL 二维旋转/frag.glsl
+  // 2-二维平移，旋转，缩放和矩阵运算/WebGL 二维缩放/frag.glsl
   var frag_default = "precision mediump float;\n\nuniform sampler2D u_image;\nuniform vec2 u_texsize;\nuniform float u_kernel[9];\nuniform float u_kernelWeight;\n\nvarying vec2 v_texcoord;\n\nvoid main() {\n  gl_FragColor = texture2D(u_image, v_texcoord);\n  // gl_FragColor = texture2D(u_image, v_texcoord).bgra;\n\n  vec2 onePixel = vec2(1.0, 1.0) / u_texsize;\n\n  // gl_FragColor = (\n  //   texture2D(u_image, v_texcoord) +\n  //   texture2D(u_image, v_texcoord + vec2(onePixel.x, 0.0)) +\n  //   texture2D(u_image, v_texcoord - vec2(onePixel.x, 0.0))\n  // ) / 3.0;\n\n  vec4 colorSum =\n    texture2D(u_image, v_texcoord + onePixel * vec2(-1, -1)) * u_kernel[0] +\n    texture2D(u_image, v_texcoord + onePixel * vec2( 0, -1)) * u_kernel[1] +\n    texture2D(u_image, v_texcoord + onePixel * vec2( 1, -1)) * u_kernel[2] +\n    texture2D(u_image, v_texcoord + onePixel * vec2(-1,  0)) * u_kernel[3] +\n    texture2D(u_image, v_texcoord + onePixel * vec2( 0,  0)) * u_kernel[4] +\n    texture2D(u_image, v_texcoord + onePixel * vec2( 1,  0)) * u_kernel[5] +\n    texture2D(u_image, v_texcoord + onePixel * vec2(-1,  1)) * u_kernel[6] +\n    texture2D(u_image, v_texcoord + onePixel * vec2( 0,  1)) * u_kernel[7] +\n    texture2D(u_image, v_texcoord + onePixel * vec2( 1,  1)) * u_kernel[8] ;\n \n   // \u53EA\u628Argb\u503C\u6C42\u548C\u9664\u4EE5\u6743\u91CD\n   // \u5C06\u963F\u5C14\u6CD5\u503C\u8BBE\u4E3A 1.0\n   gl_FragColor = vec4((colorSum / u_kernelWeight).rgb, 1.0);\n}";
 
   // utils/helper.ts
@@ -51,7 +51,7 @@
     return [l, t, l, b, r, t, r, t, l, b, r, b];
   }
 
-  // 2-二维平移，旋转，缩放和矩阵运算/WebGL 二维旋转/index.ts
+  // 2-二维平移，旋转，缩放和矩阵运算/WebGL 二维缩放/index.ts
   var kernels = {
     normal: [0, 0, 0, 0, 1, 0, 0, 0, 0],
     gaussianBlur: [0.045, 0.122, 0.045, 0.122, 0.332, 0.122, 0.045, 0.122, 0.045],
@@ -86,6 +86,8 @@
     let rotationX = 0;
     let rotationY = 1;
     let rotationDeg = 0;
+    let scaleX = 1;
+    let scaleY = 1;
     const vertexShader = createShader(gl, gl.VERTEX_SHADER, vert_default);
     const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, frag_default);
     const program = createProgram(gl, vertexShader, fragmentShader);
@@ -99,6 +101,7 @@
     const kernelWeightLocation = gl.getUniformLocation(program, "u_kernelWeight");
     const translationLocation = gl.getUniformLocation(program, "u_translation");
     const rotationLocation = gl.getUniformLocation(program, "u_rotation");
+    const scaleLocation = gl.getUniformLocation(program, "u_scale");
     const texture = gl.createTexture();
     const image = await loadImage("./deepkolos.jpg");
     const imgW = image.naturalWidth / 2;
@@ -126,6 +129,7 @@
       gl.uniform1f(kernelWeightLocation, computeKernelWeight(kernels[name]));
       gl.uniform2f(translationLocation, translateX, translateY);
       gl.uniform2f(rotationLocation, rotationX, rotationY);
+      gl.uniform2f(scaleLocation, scaleX, scaleY);
       gl.enableVertexAttribArray(positionAttributeLocation);
       gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
       gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
@@ -150,6 +154,8 @@
     const inputX = document.getElementById("inputX");
     const inputY = document.getElementById("inputY");
     const inputR = document.getElementById("inputR");
+    const inputSX = document.getElementById("inputSX");
+    const inputSY = document.getElementById("inputSY");
     inputX.oninput = () => {
       translateX = inputX.valueAsNumber / 100;
       drawEffect();
@@ -163,6 +169,14 @@
       const rotationRad = rotationDeg * Math.PI / 180;
       rotationX = Math.sin(rotationRad);
       rotationY = Math.cos(rotationRad);
+      drawEffect();
+    };
+    inputSX.oninput = () => {
+      scaleX = inputSX.valueAsNumber / 100;
+      drawEffect();
+    };
+    inputSY.oninput = () => {
+      scaleY = inputSY.valueAsNumber / 100;
       drawEffect();
     };
   }

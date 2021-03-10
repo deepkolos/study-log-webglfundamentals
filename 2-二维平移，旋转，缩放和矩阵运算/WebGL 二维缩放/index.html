@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HelloWorld</title>
+    <style>
+      * {
+        padding: 0;
+        margin: 0;
+      }
+      canvas {
+        display: block;
+      }
+      select {
+        position: absolute;
+        right: 100px;
+        top: 20px;
+      }
+      input {
+        position: absolute;
+        right: 100px;
+      }
+      #inputX {
+        top: 50px;
+      }
+      #inputY {
+        top: 70px;
+      }
+      #inputR {
+        top: 90px;
+      }
+      #inputSX {
+        top: 110px;
+      }
+      #inputSY {
+        top: 130px;
+      }
+    </style>
+  </head>
+  <body>
+    <input id="inputX" type="range" min="0" max="100" value="0"></input>
+    <input id="inputY" type="range" min="0" max="100" value="0"></input>
+    <input id="inputR" type="range" min="0" max="360" value="0"></input>
+    <input id="inputSX" type="range" min="-100" max="100" value="0"></input>
+    <input id="inputSY" type="range" min="-100" max="100" value="0"></input>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

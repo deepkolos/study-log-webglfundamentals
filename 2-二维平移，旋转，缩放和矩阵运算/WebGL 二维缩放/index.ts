@@ -40,6 +40,8 @@ async function main() {
   let rotationX = 0;
   let rotationY = 1;
   let rotationDeg = 0;
+  let scaleX = 1;
+  let scaleY = 1;
 
   // init webgl
   const vertexShader = createShader(gl, gl.VERTEX_SHADER, vert);
@@ -55,6 +57,7 @@ async function main() {
   const kernelWeightLocation = gl.getUniformLocation(program, 'u_kernelWeight');
   const translationLocation = gl.getUniformLocation(program, 'u_translation');
   const rotationLocation = gl.getUniformLocation(program, 'u_rotation');
+  const scaleLocation = gl.getUniformLocation(program, "u_scale");
 
   // 设置uniform
   const texture = gl.createTexture();
@@ -92,6 +95,7 @@ async function main() {
     gl.uniform1f(kernelWeightLocation, computeKernelWeight(kernels[name]));
     gl.uniform2f(translationLocation, translateX, translateY);
     gl.uniform2f(rotationLocation, rotationX, rotationY);
+    gl.uniform2f(scaleLocation, scaleX, scaleY);
 
     gl.enableVertexAttribArray(positionAttributeLocation);
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
@@ -124,6 +128,8 @@ async function main() {
   const inputX = document.getElementById('inputX') as HTMLInputElement;
   const inputY = document.getElementById('inputY') as HTMLInputElement;
   const inputR = document.getElementById('inputR') as HTMLInputElement;
+  const inputSX = document.getElementById('inputSX') as HTMLInputElement;
+  const inputSY = document.getElementById('inputSY') as HTMLInputElement;
 
   inputX.oninput = () => {
     translateX = inputX.valueAsNumber / 100;
@@ -138,7 +144,14 @@ async function main() {
     const rotationRad = (rotationDeg * Math.PI) / 180;
     rotationX = Math.sin(rotationRad);
     rotationY = Math.cos(rotationRad);
-
+    drawEffect();
+  };
+  inputSX.oninput = () => {
+    scaleX = inputSX.valueAsNumber / 100;
+    drawEffect();
+  };
+  inputSY.oninput = () => {
+    scaleY = inputSY.valueAsNumber / 100;
     drawEffect();
   };
 }
