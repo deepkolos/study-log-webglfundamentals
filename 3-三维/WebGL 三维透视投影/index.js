@@ -1,6 +1,6 @@
 (() => {
   // 3-三维/WebGL 三维透视投影/vert.glsl
-  var vert_default = "attribute vec4 a_position;\nattribute vec4 a_color;\n\nuniform mat4 u_matrix;\nuniform float u_fudgeFactor;\n\nvarying vec4 v_color;\n\nvoid main() {\n  vec4 pos = u_matrix * a_position;\n  float zToDivideBy = 1.0 + pos.z * u_fudgeFactor;\n  gl_Position = vec4(pos.xy / zToDivideBy, pos.zw);\n  v_color = a_color;\n}";
+  var vert_default = "attribute vec4 a_position;\nattribute vec4 a_color;\n\nuniform mat4 u_matrix;\n// uniform float u_fudgeFactor;\n\nvarying vec4 v_color;\n\nvoid main() {\n  vec4 pos = u_matrix * a_position;\n  // float zToDivideBy = 1.0 + pos.z * u_fudgeFactor;\n  // gl_Position = vec4(pos.xy / zToDivideBy, pos.zw);\n  gl_Position = pos;\n  v_color = a_color;\n}";
 
   // 3-三维/WebGL 三维透视投影/frag.glsl
   var frag_default = "precision mediump float;\n\nvarying vec4 v_color;\n\nvoid main() {\n  gl_FragColor = v_color; // vec4(0.08, 0.76, 0.89, 1);\n}";
@@ -45,6 +45,28 @@
     return buffer;
   }
   var m4 = {
+    perspective: function(fieldOfViewInRadians, aspect, near, far) {
+      var f = Math.tan(Math.PI * 0.5 - 0.5 * fieldOfViewInRadians);
+      var rangeInv = 1 / (near - far);
+      return [
+        f / aspect,
+        0,
+        0,
+        0,
+        0,
+        f,
+        0,
+        0,
+        0,
+        0,
+        (near + far) * rangeInv,
+        -1,
+        0,
+        0,
+        near * far * rangeInv * 2,
+        0
+      ];
+    },
     projection: function(width, height, depth) {
       return [2 / width, 0, 0, 0, 0, -2 / height, 0, 0, 0, 0, 2 / depth, 0, -1, 1, 0, 1];
     },
@@ -141,7 +163,7 @@
   // 3-三维/WebGL 三维透视投影/index.ts
   async function main() {
     const {gl} = initCanvas();
-    let translation = [0, 0, 0];
+    let translation = [0, 0, -1e3];
     let rotation = [0, 0, 0];
     let scale = [1, 1, 1];
     let fudgeFactor = 0;
@@ -156,17 +178,14 @@
       0,
       0,
       0,
-      30,
-      0,
-      0,
-      0,
-      150,
-      0,
       0,
       150,
       0,
       30,
       0,
+      0,
+      0,
+      150,
       0,
       30,
       150,
@@ -174,29 +193,26 @@
       30,
       0,
       0,
+      30,
+      0,
+      0,
+      30,
+      30,
+      0,
       100,
       0,
       0,
       30,
       30,
       0,
-      30,
+      100,
       30,
       0,
       100,
       0,
-      0,
-      100,
-      30,
       0,
       30,
       60,
-      0,
-      67,
-      60,
-      0,
-      30,
-      90,
       0,
       30,
       90,
@@ -204,8 +220,14 @@
       67,
       60,
       0,
+      30,
+      90,
+      0,
       67,
       90,
+      0,
+      67,
+      60,
       0,
       0,
       0,
@@ -319,27 +341,18 @@
       30,
       0,
       30,
-      30,
-      30,
-      30,
       60,
+      30,
+      30,
+      30,
       30,
       30,
       30,
       0,
       30,
       60,
-      30,
-      30,
-      60,
       0,
       30,
-      60,
-      0,
-      30,
-      60,
-      30,
-      67,
       60,
       30,
       30,
@@ -348,17 +361,17 @@
       67,
       60,
       30,
-      67,
-      60,
-      0,
-      67,
-      60,
-      0,
-      67,
+      30,
       60,
       30,
+      30,
+      60,
+      0,
       67,
-      90,
+      60,
+      0,
+      67,
+      60,
       30,
       67,
       60,
@@ -367,8 +380,17 @@
       90,
       30,
       67,
+      60,
+      30,
+      67,
+      60,
+      0,
+      67,
       90,
       0,
+      67,
+      90,
+      30,
       30,
       90,
       0,
@@ -387,15 +409,6 @@
       67,
       90,
       0,
-      30,
-      90,
-      0,
-      30,
-      90,
-      30,
-      30,
-      150,
-      30,
       30,
       90,
       0,
@@ -403,8 +416,17 @@
       150,
       30,
       30,
+      90,
+      30,
+      30,
+      90,
+      0,
+      30,
       150,
       0,
+      30,
+      150,
+      30,
       0,
       150,
       0,
@@ -734,10 +756,11 @@
     ], Uint8Array);
     gl.useProgram(program);
     gl.enable(gl.DEPTH_TEST);
+    gl.enable(gl.CULL_FACE);
     function draw() {
       gl.clearColor(0, 0, 0, 0);
       gl.clear(gl.COLOR_BUFFER_BIT);
-      let matrix = m4.projection(gl.canvas.width, gl.canvas.height, 400);
+      let matrix = m4.perspective(30 / 180 * Math.PI, gl.canvas.width / gl.canvas.height, 1, 2e3);
       matrix = m4.translate(matrix, translation[0], translation[1], translation[2]);
       matrix = m4.xRotate(matrix, rotation[0]);
       matrix = m4.yRotate(matrix, rotation[1]);
@@ -777,7 +800,7 @@
       translation[1] = inputY.valueAsNumber / 100 * gl.canvas.height;
     });
     inputZ.oninput = beforeDraw(() => {
-      translation[2] = inputZ.valueAsNumber / 100 * 400;
+      translation[2] = inputZ.valueAsNumber;
     });
     inputRX.oninput = beforeDraw(() => {
       const rotationDeg = 360 - ~~inputRX.value;

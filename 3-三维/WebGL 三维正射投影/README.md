@@ -14,6 +14,10 @@ w 的默认值就是 1
 
 其实只开深度测试，不开背面剔除也能得到正确结果，开背面需要注意三角形方向
 
+不对，透视投影的时候还是会有问题，还是得开
+
+并且scale为复数的时候，正反面会相反
+
 所以 three 里面透视相机/正交相机存储只是一个投影矩阵？需要看看代码验证下
 确实 Camera 对象存储的是 projectionMatrix，PerspectiveCamera/OrthographicCamera 只是对projectionMatrix的配置
 

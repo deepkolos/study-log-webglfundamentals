@@ -5,7 +5,7 @@ import { createBuffer, createProgram, createShader, initCanvas, m4 } from 'utils
 async function main() {
   // init canvas
   const { gl } = initCanvas();
-  let translation = [0, 0, 0];
+  let translation = [0, 0, -1000];
   let rotation = [0, 0, 0];
   let scale = [1, 1, 1];
   let fudgeFactor = 0;
@@ -22,28 +22,28 @@ async function main() {
   // prettier-ignore
   const positionBuffer = createBuffer(gl, [
     // left column front
-      0,   0,  0,
-     30,   0,  0,
-      0, 150,  0,
-      0, 150,  0,
-     30,   0,  0,
-     30, 150,  0,
+    0,   0,  0,
+    0, 150,  0,
+    30,   0,  0,
+    0, 150,  0,
+    30, 150,  0,
+    30,   0,  0,
 
     // top rung front
-     30,   0,  0,
+    30,   0,  0,
+    30,  30,  0,
     100,   0,  0,
-     30,  30,  0,
-     30,  30,  0,
-    100,   0,  0,
+    30,  30,  0,
     100,  30,  0,
+    100,   0,  0,
 
     // middle rung front
-     30,  60,  0,
-     67,  60,  0,
-     30,  90,  0,
-     30,  90,  0,
-     67,  60,  0,
-     67,  90,  0,
+    30,  60,  0,
+    30,  90,  0,
+    67,  60,  0,
+    30,  90,  0,
+    67,  90,  0,
+    67,  60,  0,
 
     // left column back
       0,   0,  30,
@@ -95,27 +95,27 @@ async function main() {
 
     // between top rung and middle
     30,   30,   0,
+    30,   60,  30,
     30,   30,  30,
-    30,   60,  30,
     30,   30,   0,
-    30,   60,  30,
     30,   60,   0,
+    30,   60,  30,
 
     // top of middle rung
     30,   60,   0,
+    67,   60,  30,
     30,   60,  30,
-    67,   60,  30,
     30,   60,   0,
-    67,   60,  30,
     67,   60,   0,
+    67,   60,  30,
 
     // right of middle rung
     67,   60,   0,
+    67,   90,  30,
     67,   60,  30,
-    67,   90,  30,
     67,   60,   0,
-    67,   90,  30,
     67,   90,   0,
+    67,   90,  30,
 
     // bottom of middle rung.
     30,   90,   0,
@@ -127,11 +127,11 @@ async function main() {
 
     // right of bottom
     30,   90,   0,
+    30,  150,  30,
     30,   90,  30,
-    30,  150,  30,
     30,   90,   0,
-    30,  150,  30,
     30,  150,   0,
+    30,  150,  30,
 
     // bottom
     0,   150,   0,
@@ -281,14 +281,14 @@ async function main() {
 
   gl.useProgram(program);
   gl.enable(gl.DEPTH_TEST);
-  // gl.enable(gl.CULL_FACE);
+  gl.enable(gl.CULL_FACE);
 
   // render
   function draw() {
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
-    let matrix = m4.projection(gl.canvas.width, gl.canvas.height, 400);
+    let matrix = m4.perspective((30 / 180) * Math.PI, gl.canvas.width / gl.canvas.height, 1, 2000);
     matrix = m4.translate(matrix, translation[0], translation[1], translation[2]);
     matrix = m4.xRotate(matrix, rotation[0]);
     matrix = m4.yRotate(matrix, rotation[1]);
@@ -337,7 +337,7 @@ async function main() {
     translation[1] = (inputY.valueAsNumber / 100) * gl.canvas.height;
   });
   inputZ.oninput = beforeDraw(() => {
-    translation[2] = (inputZ.valueAsNumber / 100) * 400;
+    translation[2] = inputZ.valueAsNumber;
   });
 
   inputRX.oninput = beforeDraw(() => {
