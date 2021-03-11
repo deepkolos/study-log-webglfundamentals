@@ -1,8 +1,8 @@
 (() => {
-  // 3-三维/WebGL 三维正射投影/vert.glsl
-  var vert_default = "attribute vec4 a_position;\nattribute vec4 a_color;\n\nuniform mat4 u_matrix;\n\nvarying vec4 v_color;\n\nvoid main() {\n  gl_Position = u_matrix * a_position;\n  v_color = a_color;\n}";
+  // 3-三维/WebGL 三维透视投影/vert.glsl
+  var vert_default = "attribute vec4 a_position;\nattribute vec4 a_color;\n\nuniform mat4 u_matrix;\nuniform float u_fudgeFactor;\n\nvarying vec4 v_color;\n\nvoid main() {\n  vec4 pos = u_matrix * a_position;\n  float zToDivideBy = 1.0 + pos.z * u_fudgeFactor;\n  gl_Position = vec4(pos.xy / zToDivideBy, pos.zw);\n  v_color = a_color;\n}";
 
-  // 3-三维/WebGL 三维正射投影/frag.glsl
+  // 3-三维/WebGL 三维透视投影/frag.glsl
   var frag_default = "precision mediump float;\n\nvarying vec4 v_color;\n\nvoid main() {\n  gl_FragColor = v_color; // vec4(0.08, 0.76, 0.89, 1);\n}";
 
   // utils/helper.ts
@@ -138,18 +138,20 @@
     }
   };
 
-  // 3-三维/WebGL 三维正射投影/index.ts
+  // 3-三维/WebGL 三维透视投影/index.ts
   async function main() {
     const {gl} = initCanvas();
     let translation = [0, 0, 0];
     let rotation = [0, 0, 0];
     let scale = [1, 1, 1];
+    let fudgeFactor = 0;
     const vertexShader = createShader(gl, gl.VERTEX_SHADER, vert_default);
     const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, frag_default);
     const program = createProgram(gl, vertexShader, fragmentShader);
     const positionAttributeLocation = gl.getAttribLocation(program, "a_position");
     const colorAttributeLocation = gl.getAttribLocation(program, "a_color");
     const matrixLocation = gl.getUniformLocation(program, "u_matrix");
+    const fudgeFactorLocation = gl.getUniformLocation(program, "u_fudgeFactor");
     const positionBuffer = createBuffer(gl, [
       0,
       0,
@@ -742,6 +744,7 @@
       matrix = m4.zRotate(matrix, rotation[2]);
       matrix = m4.scale(matrix, scale[0], scale[1], scale[2]);
       gl.uniformMatrix4fv(matrixLocation, false, matrix);
+      gl.uniform1f(fudgeFactorLocation, fudgeFactor);
       gl.enableVertexAttribArray(positionAttributeLocation);
       gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
       gl.vertexAttribPointer(positionAttributeLocation, 3, gl.FLOAT, false, 0, 0);
@@ -760,6 +763,7 @@
     const inputSX = document.getElementById("inputSX");
     const inputSY = document.getElementById("inputSY");
     const inputSZ = document.getElementById("inputSZ");
+    const inputFF = document.getElementById("inputFF");
     function beforeDraw(cb) {
       return () => {
         cb();
@@ -795,6 +799,9 @@
     });
     inputSZ.oninput = beforeDraw(() => {
       scale[2] = inputSZ.valueAsNumber / 100;
+    });
+    inputFF.oninput = beforeDraw(() => {
+      fudgeFactor = inputFF.valueAsNumber / 100 * 5;
     });
   }
   main();

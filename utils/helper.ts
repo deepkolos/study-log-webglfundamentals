@@ -51,11 +51,12 @@ export function createRectangle(l, t, w, h) {
 export function createBuffer(
   gl: WebGLRenderingContext,
   data: Array<number>,
+  TypeArray: Float32ArrayConstructor | Uint8ArrayConstructor = Float32Array,
   usage = gl.STATIC_DRAW,
 ) {
   const buffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), usage);
+  gl.bufferData(gl.ARRAY_BUFFER, TypeArray.from(data), usage);
   return buffer;
 }
 

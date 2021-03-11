@@ -8,6 +8,7 @@ async function main() {
   let translation = [0, 0, 0];
   let rotation = [0, 0, 0];
   let scale = [1, 1, 1];
+  let fudgeFactor = 0;
 
   // init webgl
   const vertexShader = createShader(gl, gl.VERTEX_SHADER, vert);
@@ -15,8 +16,9 @@ async function main() {
   const program = createProgram(gl, vertexShader, fragmentShader);
   const positionAttributeLocation = gl.getAttribLocation(program, 'a_position');
   const colorAttributeLocation = gl.getAttribLocation(program, 'a_color');
-
   const matrixLocation = gl.getUniformLocation(program, 'u_matrix');
+  const fudgeFactorLocation = gl.getUniformLocation(program, 'u_fudgeFactor');
+
   // prettier-ignore
   const positionBuffer = createBuffer(gl, [
     // left column front
@@ -294,6 +296,7 @@ async function main() {
     matrix = m4.scale(matrix, scale[0], scale[1], scale[2]);
 
     gl.uniformMatrix4fv(matrixLocation, false, matrix);
+    gl.uniform1f(fudgeFactorLocation, fudgeFactor);
 
     gl.enableVertexAttribArray(positionAttributeLocation);
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
@@ -318,6 +321,7 @@ async function main() {
   const inputSX = document.getElementById('inputSX') as HTMLInputElement;
   const inputSY = document.getElementById('inputSY') as HTMLInputElement;
   const inputSZ = document.getElementById('inputSZ') as HTMLInputElement;
+  const inputFF = document.getElementById('inputFF') as HTMLInputElement;
 
   function beforeDraw(cb) {
     return () => {
@@ -357,6 +361,10 @@ async function main() {
   });
   inputSZ.oninput = beforeDraw(() => {
     scale[2] = inputSZ.valueAsNumber / 100;
+  });
+
+  inputFF.oninput = beforeDraw(() => {
+    fudgeFactor = (inputFF.valueAsNumber / 100) * 5;
   });
 }
 
