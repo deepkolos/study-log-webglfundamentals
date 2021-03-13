@@ -1,8 +1,8 @@
 (() => {
-  // 3-三维/WebGL 三维透视投影/vert.glsl
-  var vert_default = "attribute vec4 a_position;\nattribute vec4 a_color;\n\nuniform mat4 u_matrix;\n// uniform float u_fudgeFactor;\n\nvarying vec4 v_color;\n\nvoid main() {\n  vec4 pos = u_matrix * a_position;\n  // float zToDivideBy = 1.0 + pos.z * u_fudgeFactor;\n  // gl_Position = vec4(pos.xy / zToDivideBy, pos.zw);\n  gl_Position = pos;\n  v_color = a_color;\n}";
+  // 3-三维/WebGL 三维相机/vert.glsl
+  var vert_default = "attribute vec4 a_position;\nattribute vec4 a_color;\n\nuniform mat4 u_matrix;\n\nvarying vec4 v_color;\n\nvoid main() {\n  gl_Position = u_matrix * a_position;\n  v_color = a_color;\n}";
 
-  // 3-三维/WebGL 三维透视投影/frag.glsl
+  // 3-三维/WebGL 三维相机/frag.glsl
   var frag_default = "precision mediump float;\n\nvarying vec4 v_color;\n\nvoid main() {\n  gl_FragColor = v_color; // vec4(0.08, 0.76, 0.89, 1);\n}";
 
   // utils/helper.ts
@@ -43,6 +43,9 @@
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     gl.bufferData(gl.ARRAY_BUFFER, TypeArray.from(data), usage);
     return buffer;
+  }
+  function deg2rad(deg) {
+    return deg / 180 * Math.PI;
   }
   function normalize(v) {
     var length = Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
@@ -272,20 +275,20 @@
     }
   };
 
-  // 3-三维/WebGL 三维透视投影/index.ts
+  // 3-三维/WebGL 三维相机/index.ts
   async function main() {
     const {gl} = initCanvas();
-    let translation = [0, 0, -1e3];
-    let rotation = [0, 0, 0];
-    let scale = [1, 1, 1];
-    let fudgeFactor = 0;
+    let rotateY = 0;
+    const cameraPosition = [0, 0, 600];
+    const up = [0, 1, 0];
+    const cameraMatrix = m4.translation(0, 0, 600);
+    const viewMatrix = m4.inverse(cameraMatrix);
     const vertexShader = createShader(gl, gl.VERTEX_SHADER, vert_default);
     const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, frag_default);
     const program = createProgram(gl, vertexShader, fragmentShader);
     const positionAttributeLocation = gl.getAttribLocation(program, "a_position");
     const colorAttributeLocation = gl.getAttribLocation(program, "a_color");
     const matrixLocation = gl.getUniformLocation(program, "u_matrix");
-    const fudgeFactorLocation = gl.getUniformLocation(program, "u_fudgeFactor");
     const positionBuffer = createBuffer(gl, [
       0,
       0,
@@ -872,33 +875,36 @@
     function draw() {
       gl.clearColor(0, 0, 0, 0);
       gl.clear(gl.COLOR_BUFFER_BIT);
-      let matrix = m4.perspective(30 / 180 * Math.PI, gl.canvas.width / gl.canvas.height, 1, 2e3);
-      matrix = m4.translate(matrix, translation[0], translation[1], translation[2]);
-      matrix = m4.xRotate(matrix, rotation[0]);
-      matrix = m4.yRotate(matrix, rotation[1]);
-      matrix = m4.zRotate(matrix, rotation[2]);
-      matrix = m4.scale(matrix, scale[0], scale[1], scale[2]);
-      gl.uniformMatrix4fv(matrixLocation, false, matrix);
-      gl.uniform1f(fudgeFactorLocation, fudgeFactor);
-      gl.enableVertexAttribArray(positionAttributeLocation);
-      gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-      gl.vertexAttribPointer(positionAttributeLocation, 3, gl.FLOAT, false, 0, 0);
-      gl.enableVertexAttribArray(colorAttributeLocation);
-      gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-      gl.vertexAttribPointer(colorAttributeLocation, 3, gl.UNSIGNED_BYTE, true, 0, 0);
-      gl.drawArrays(gl.TRIANGLES, 0, 16 * 6);
+      const num = 10;
+      let viewMatrix2;
+      const calcModelMatrix = (i) => {
+        let matrix = m4.translation(0, 0, 0);
+        matrix = m4.yRotate(matrix, deg2rad(i * (360 / num) + rotateY));
+        matrix = m4.translate(matrix, 0, 80, -300);
+        matrix = m4.xRotate(matrix, deg2rad(180));
+        if (i === 0) {
+          const target = m4.vectorMultiply([0, 0, 0, 1], matrix);
+          viewMatrix2 = m4.inverse(m4.lookAt(cameraPosition, target, up));
+        }
+        return matrix;
+      };
+      for (let i = 0; i < num; i++) {
+        let matrix = m4.perspective(deg2rad(45), gl.canvas.width / gl.canvas.height, 1, 2e3);
+        let modelMatrix = calcModelMatrix(i);
+        matrix = m4.multiply(matrix, viewMatrix2);
+        matrix = m4.multiply(matrix, modelMatrix);
+        gl.uniformMatrix4fv(matrixLocation, false, matrix);
+        gl.enableVertexAttribArray(positionAttributeLocation);
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+        gl.vertexAttribPointer(positionAttributeLocation, 3, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(colorAttributeLocation);
+        gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+        gl.vertexAttribPointer(colorAttributeLocation, 3, gl.UNSIGNED_BYTE, true, 0, 0);
+        gl.drawArrays(gl.TRIANGLES, 0, 16 * 6);
+      }
     }
     draw();
     const inputX = document.getElementById("inputX");
-    const inputY = document.getElementById("inputY");
-    const inputZ = document.getElementById("inputZ");
-    const inputRX = document.getElementById("inputRX");
-    const inputRY = document.getElementById("inputRY");
-    const inputRZ = document.getElementById("inputRZ");
-    const inputSX = document.getElementById("inputSX");
-    const inputSY = document.getElementById("inputSY");
-    const inputSZ = document.getElementById("inputSZ");
-    const inputFF = document.getElementById("inputFF");
     function beforeDraw(cb) {
       return () => {
         cb();
@@ -906,37 +912,7 @@
       };
     }
     inputX.oninput = beforeDraw(() => {
-      translation[0] = inputX.valueAsNumber / 100 * gl.canvas.width;
-    });
-    inputY.oninput = beforeDraw(() => {
-      translation[1] = inputY.valueAsNumber / 100 * gl.canvas.height;
-    });
-    inputZ.oninput = beforeDraw(() => {
-      translation[2] = inputZ.valueAsNumber;
-    });
-    inputRX.oninput = beforeDraw(() => {
-      const rotationDeg = 360 - ~~inputRX.value;
-      rotation[0] = rotationDeg * Math.PI / 180;
-    });
-    inputRY.oninput = beforeDraw(() => {
-      const rotationDeg = 360 - ~~inputRY.value;
-      rotation[1] = rotationDeg * Math.PI / 180;
-    });
-    inputRZ.oninput = beforeDraw(() => {
-      const rotationDeg = 360 - ~~inputRZ.value;
-      rotation[2] = rotationDeg * Math.PI / 180;
-    });
-    inputSX.oninput = beforeDraw(() => {
-      scale[0] = inputSX.valueAsNumber / 100;
-    });
-    inputSY.oninput = beforeDraw(() => {
-      scale[1] = inputSY.valueAsNumber / 100;
-    });
-    inputSZ.oninput = beforeDraw(() => {
-      scale[2] = inputSZ.valueAsNumber / 100;
-    });
-    inputFF.oninput = beforeDraw(() => {
-      fudgeFactor = inputFF.valueAsNumber / 100 * 5;
+      rotateY = inputX.valueAsNumber;
     });
   }
   main();
