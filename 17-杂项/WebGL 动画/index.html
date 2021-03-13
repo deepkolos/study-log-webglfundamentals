@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HelloWorld</title>
+  <style>
+    * {
+      padding: 0;
+      margin: 0;
+    }
+
+    canvas {
+      display: block;
+    }
+
+    .input-can {
+      position: absolute;
+      right: 100px;
+      top: 20px;
+    }
+
+    .input-can div {
+      margin: 10px 0;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-can div span {
+      display: inline-block;
+      margin-right: 10px;
+      width: 100px;
+      text-align: right;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="input-can">
+    <div>
+      <span>x</span><input id="inputX" type="range" min="0" max="100" value="0"></input>
+    </div>
+    <div>
+      <span>y</span><input id="inputY" type="range" min="0" max="100" value="0"></input>
+    </div>
+    <div>
+      <span>z</span><input id="inputZ" type="range" min="-1000" max="1" value="-1000"></input>
+    </div>
+    <div>
+      <span>rotateX</span><input id="inputRX" type="range" min="0" max="360" value="0"></input>
+    </div>
+    <div>
+      <span>rotateY</span><input id="inputRY" type="range" min="0" max="360" value="0"></input>
+    </div>
+    <div>
+      <span>rotateZ</span><input id="inputRZ" type="range" min="0" max="360" value="0"></input>
+    </div>
+    <div>
+      <span>scaleX</span><input id="inputSX" type="range" min="-100" max="100" value="100"></input>
+    </div>
+    <div>
+      <span>scaleY</span><input id="inputSY" type="range" min="-100" max="100" value="100"></input>
+    </div>
+    <div>
+      <span>scaleZ</span><input id="inputSZ" type="range" min="-100" max="100" value="100"></input>
+    </div>
+    <div>
+      <span>fudgeFactor</span><input id="inputFF" type="range" min="0" max="100" value="0"></input>
+    </div>
+  </div>
+
+  <script src="./index.js"></script>
+</body>
+
+</html>

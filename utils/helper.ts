@@ -86,6 +86,10 @@ export function cross(a, b) {
   return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
 }
 
+export function restrictRange(x, min, max) {
+  return x > max ? max : x < min ? min : x;
+}
+
 export const m4 = {
   perspective: function (fieldOfViewInRadians, aspect, near, far) {
     var f = Math.tan(Math.PI * 0.5 - 0.5 * fieldOfViewInRadians);
