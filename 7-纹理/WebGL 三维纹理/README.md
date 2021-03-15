@@ -2,7 +2,7 @@
 
 纹理坐标[0,1], 超过部分通过 TEXTURE_WRAP_S 和 TEXTURE_WRAP_T 控制
 
-gl.generateMipmap 是 CPU 还是 GPU 上生成的？
+gl.generateMipmap 是 CPU 还是 GPU 上生成的？ (大可能 GPU)
 
 你可以为纹理选择不同的贴图筛选条件来控制 WebGL 的插值， 一共有这 6 种模式
 
@@ -27,3 +27,10 @@ mipmap 占额外的 33.33% 空间
 顶点位置使用 x, y, z, w，
 纹理坐标使用 s, t, u, v，
 因为纹理包裹的设置被叫做 TEXTURE_WRAP_S 和 TEXTURE_WRAP_T
+
+#### Texture Internal Formats
+
+https://blog.csdn.net/opengl_es/article/details/18048297
+
+> For example if you want to minimize texture storage and bandwidth requirements at the expense of visual quality, you should use GL_RGB5 or GL_RGBA4 internalformats. If you only need a single bit of alpha you can use GL_RGB5_A1 for increased color resolution. If you are willing to sacrifice some performance for improved visual quality, be sure to request GL_RGB8 or GL_RGBA8 internalformats. Otherwise you leave this decision in the hands of the person writing the driver, whose priorities may not match your own.
+
