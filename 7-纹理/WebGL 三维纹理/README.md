@@ -34,3 +34,11 @@ https://blog.csdn.net/opengl_es/article/details/18048297
 
 > For example if you want to minimize texture storage and bandwidth requirements at the expense of visual quality, you should use GL_RGB5 or GL_RGBA4 internalformats. If you only need a single bit of alpha you can use GL_RGB5_A1 for increased color resolution. If you are willing to sacrifice some performance for improved visual quality, be sure to request GL_RGB8 or GL_RGBA8 internalformats. Otherwise you leave this decision in the hands of the person writing the driver, whose priorities may not match your own.
 
+## 实验
+
+目的：熟悉纹理使用的 API，纹理映射，纹理参数的设置，不同的 MIN-FILTER、MAG-FILTER 带来不同的效果影响
+
+## 问题
+
+three 的 double-side 是如何实现，示例中的 F 的另一面的纹理坐标和正面一样？
+示例中是通过交换三角形的点的顺序实现，三角面的朝向的改变，所以纹理贴图
