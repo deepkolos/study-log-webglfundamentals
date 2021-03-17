@@ -1,9 +1,9 @@
 (() => {
-  // 7-纹理/WebGL 三维纹理/vert.glsl
+  // 7-纹理/WebGL 使用多个纹理/vert.glsl
   var vert_default = "attribute vec4 a_position;\nattribute vec2 a_texcoord;\n\nuniform mat4 u_matrix;\n\nvarying vec2 v_texcoord;\n\nvoid main() {\n  gl_Position = u_matrix * a_position;\n  v_texcoord = a_texcoord;\n}";
 
-  // 7-纹理/WebGL 三维纹理/frag.glsl
-  var frag_default = "precision mediump float;\n\nuniform sampler2D u_image;\n\nvarying vec2 v_texcoord;\n\nvoid main() {\n  gl_FragColor = texture2D(u_image, v_texcoord); // vec4(0.08, 0.76, 0.89, 1);\n  // gl_FragColor = vec4(0.08, 0.76, 0.89, 1);\n\n}";
+  // 7-纹理/WebGL 使用多个纹理/frag.glsl
+  var frag_default = "precision mediump float;\n\nuniform sampler2D u_image0;\nuniform sampler2D u_image1;\n\nvarying vec2 v_texcoord;\n\nvoid main() {\n  vec4 color0 = texture2D(u_image0, v_texcoord);\n  vec4 color1 = texture2D(u_image1, v_texcoord);\n  gl_FragColor = color0 * color1;\n}";
 
   // utils/helper.ts
   function initCanvas() {
@@ -279,7 +279,7 @@
     }
   };
 
-  // 7-纹理/WebGL 三维纹理/index.ts
+  // 7-纹理/WebGL 使用多个纹理/index.ts
   async function main() {
     const {gl} = initCanvas();
     let translation = [0, 0, -1e3];
@@ -291,17 +291,19 @@
     const positionAttributeLocation = gl.getAttribLocation(program, "a_position");
     const texcoordAttributeLocation = gl.getAttribLocation(program, "a_texcoord");
     const matrixLocation = gl.getUniformLocation(program, "u_matrix");
+    const image0Location = gl.getUniformLocation(program, "u_image0");
+    const image1Location = gl.getUniformLocation(program, "u_image1");
     const positionBuffer = createBuffer(gl, [
-      0,
+      -150,
       0,
       30,
       150,
       0,
       30,
-      0,
+      -150,
       150,
       30,
-      0,
+      -150,
       150,
       30,
       150,
@@ -328,14 +330,30 @@
     gl.useProgram(program);
     gl.enable(gl.DEPTH_TEST);
     gl.enable(gl.CULL_FACE);
-    const texture = gl.createTexture();
-    const image = await loadImage("./deepkolos.jpg");
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
+    {
+      const texture = gl.createTexture();
+      const image = await loadImage("./star.jpg");
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
+      gl.uniform1i(image0Location, 0);
+    }
+    {
+      const texture = gl.createTexture();
+      const image = await loadImage("./leaves.jpg");
+      gl.activeTexture(gl.TEXTURE1);
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
+      gl.uniform1i(image1Location, 1);
+    }
     function draw() {
       gl.clearColor(0, 0, 0, 0);
       gl.clear(gl.COLOR_BUFFER_BIT);

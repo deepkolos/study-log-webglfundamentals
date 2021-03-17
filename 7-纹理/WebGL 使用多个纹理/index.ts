@@ -16,14 +16,16 @@ async function main() {
   const positionAttributeLocation = gl.getAttribLocation(program, 'a_position');
   const texcoordAttributeLocation = gl.getAttribLocation(program, 'a_texcoord');
   const matrixLocation = gl.getUniformLocation(program, 'u_matrix');
+  const image0Location = gl.getUniformLocation(program, 'u_image0');
+  const image1Location = gl.getUniformLocation(program, 'u_image1');
 
   // prettier-ignore
   const positionBuffer = createBuffer(gl, [
   // left column back
-    0,   0,  30,
+    -150,   0,  30,
     150,   0,  30,
-    0, 150,  30,
-    0, 150,  30,
+    -150, 150,  30,
+    -150, 150,  30,
     150,   0,  30,
     150, 150,  30,
   ]);
@@ -42,17 +44,33 @@ async function main() {
   gl.enable(gl.DEPTH_TEST);
   gl.enable(gl.CULL_FACE);
 
-   // 设置uniform
-   const texture = gl.createTexture();
-   const image = await loadImage('./deepkolos.jpg');
- 
-   gl.bindTexture(gl.TEXTURE_2D, texture);
-   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
- 
+  // 设置uniform
+  {
+    const texture = gl.createTexture();
+    const image = await loadImage('./star.jpg');
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
+    gl.uniform1i(image0Location, 0);
+  }
+
+  {
+    const texture = gl.createTexture();
+    const image = await loadImage('./leaves.jpg');
+
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
+    gl.uniform1i(image1Location, 1);
+  }
 
   // render
   function draw() {
