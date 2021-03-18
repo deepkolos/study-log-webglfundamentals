@@ -16,4 +16,4 @@
 
 createFrameBuffer -> framebufferTexture2D -> bindFramebuffer -> drawArrays
 
-
+图像处理已经使用了 FrameBuffer，这篇描述了其全部使用方式
