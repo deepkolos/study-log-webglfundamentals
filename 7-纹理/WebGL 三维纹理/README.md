@@ -2,8 +2,6 @@
 
 纹理坐标[0,1], 超过部分通过 TEXTURE_WRAP_S 和 TEXTURE_WRAP_T 控制
 
-gl.generateMipmap 是 CPU 还是 GPU 上生成的？ (大可能 GPU)
-
 你可以为纹理选择不同的贴图筛选条件来控制 WebGL 的插值， 一共有这 6 种模式
 
     NEAREST = 从最大的贴图中选择 1 个像素
@@ -42,3 +40,13 @@ https://blog.csdn.net/opengl_es/article/details/18048297
 
 three 的 double-side 是如何实现，示例中的 F 的另一面的纹理坐标和正面一样？
 示例中是通过交换三角形的点的顺序实现，三角面的朝向的改变，所以纹理贴图
+
+gl.generateMipmap 是 CPU 还是 GPU 上生成的？ (具体看平台实现，老的平台需要自己引入 CPU 处理库实现，WebGL 基于 OpenGL ES 2.0，新平台基本都是硬件实现)
+
+https://stackoverflow.com/questions/23017317/mipmap-generation-in-opengl-is-it-hardware-accelerated
+
+http://cncc.bingj.com/cache.aspx?q=http%3a%2f%2fwww.g-truc.net%2fpost-0256.html&d=4968761950482805&mkt=en-US&setlang=en-US&w=Ao95Vg6mm37TiFyeDyD8_AgItHLf-UO1
+
+generateMipmap 非二次幂的是需要 frameBuffer，three 的 HDR 的 mipmap 生成就是非二次幂纹理生成 mipmap
+
+可以通过 gl.hint 设置 gl.GENERATE_MIPMAP_HINT `gl.FASTEST` | `gl.NICEST` | `gl.DONT_CARE`
