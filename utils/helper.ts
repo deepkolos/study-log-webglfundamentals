@@ -155,6 +155,16 @@ export const m4 = {
     ];
   },
 
+  // prettier-ignore
+  transpose: function(m) {
+    return [
+      m[0], m[4], m[8], m[12],
+      m[1], m[5], m[9], m[13],
+      m[2], m[6], m[10], m[14],
+      m[3], m[7], m[11], m[15],
+    ];
+  },
+
   projection: function (width, height, depth) {
     // 注意：这个矩阵翻转了 Y 轴，所以 0 在上方
     return [2 / width, 0, 0, 0, 0, -2 / height, 0, 0, 0, 0, 2 / depth, 0, -1, 1, 0, 1];
@@ -373,6 +383,30 @@ export const m4 = {
       cameraPosition[2],
       1,
     ];
+  },
+
+  /**
+   * Takes a 4-by-4 matrix and a vector with 3 entries,
+   * interprets the vector as a point, transforms that point by the matrix, and
+   * returns the result as a vector with 3 entries.
+   * @param {Matrix4} m The matrix.
+   * @param {Vector3} v The point.
+   * @param {Vector4} dst optional vector4 to store result
+   * @return {Vector4} dst or new Vector4 if not provided
+   * @memberOf module:webgl-3d-math
+   */
+  transformPoint(m, v, dst?: Array<number>) {
+    dst = dst || new Array(3);
+    var v0 = v[0];
+    var v1 = v[1];
+    var v2 = v[2];
+    var d = v0 * m[0 * 4 + 3] + v1 * m[1 * 4 + 3] + v2 * m[2 * 4 + 3] + m[3 * 4 + 3];
+
+    dst[0] = (v0 * m[0 * 4 + 0] + v1 * m[1 * 4 + 0] + v2 * m[2 * 4 + 0] + m[3 * 4 + 0]) / d;
+    dst[1] = (v0 * m[0 * 4 + 1] + v1 * m[1 * 4 + 1] + v2 * m[2 * 4 + 1] + m[3 * 4 + 1]) / d;
+    dst[2] = (v0 * m[0 * 4 + 2] + v1 * m[1 * 4 + 2] + v2 * m[2 * 4 + 2] + m[3 * 4 + 2]) / d;
+
+    return dst;
   },
 };
 

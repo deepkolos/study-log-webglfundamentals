@@ -1,9 +1,9 @@
 (() => {
-  // 3-三维/WebGL 三维相机/vert.glsl
-  var vert_default = "attribute vec4 a_position;\nattribute vec4 a_color;\n\nuniform mat4 u_matrix;\n\nvarying vec4 v_color;\n\nvoid main() {\n  gl_Position = u_matrix * a_position;\n  v_color = a_color;\n}";
+  // 4-光照/WebGL 三维方向光源/vert.glsl
+  var vert_default = "attribute vec4 a_position;\n// attribute vec4 a_color;\nattribute vec3 a_normal;\n\nuniform mat4 u_worldInverseTransposeMatrix;\nuniform mat4 u_projectWorldMatrix;\n\n// varying vec4 v_color;\nvarying vec3 v_normal;\n\nvoid main() {\n  vec4 pos = u_projectWorldMatrix * a_position;\n  gl_Position = pos;\n  // v_color = a_color;\n  v_normal = mat3(u_worldInverseTransposeMatrix) * a_normal;\n  // v_normal = a_normal;\n\n}";
 
-  // 3-三维/WebGL 三维相机/frag.glsl
-  var frag_default = "precision mediump float;\n\nvarying vec4 v_color;\n\nvoid main() {\n  gl_FragColor = v_color; // vec4(0.08, 0.76, 0.89, 1);\n}";
+  // 4-光照/WebGL 三维方向光源/frag.glsl
+  var frag_default = "precision mediump float;\n\nuniform vec3 u_lightDirReversed;\n\nvarying vec3 v_normal;\n\nvoid main() {\n  vec3 normal = normalize(v_normal);\n  float light = dot(normal, u_lightDirReversed);\n\n  gl_FragColor = vec4(0.08, 0.76, 0.89, 1);\n  gl_FragColor.rgb *= light;\n}";
 
   // utils/helper.ts
   function initCanvas() {
@@ -37,15 +37,6 @@
       return program;
     console.log(gl.getProgramInfoLog(program));
     gl.deleteProgram(program);
-  }
-  function createBuffer(gl, data, TypeArray = Float32Array, usage = gl.STATIC_DRAW) {
-    const buffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.bufferData(gl.ARRAY_BUFFER, TypeArray.from(data), usage);
-    return buffer;
-  }
-  function deg2rad(deg) {
-    return deg / 180 * Math.PI;
   }
   function normalize(v) {
     var length = Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
@@ -306,21 +297,108 @@
     }
   };
 
-  // 3-三维/WebGL 三维相机/index.ts
+  // 4-光照/WebGL 三维方向光源/index.ts
   async function main() {
     const {gl} = initCanvas();
-    let rotateY = 0;
-    const cameraPosition = [0, 0, 600];
-    const up = [0, 1, 0];
-    const cameraMatrix = m4.translation(0, 0, 600);
-    const viewMatrix = m4.inverse(cameraMatrix);
+    let translation = [0, 0, 0];
+    let rotation = [0, 0, 0];
+    let scale = [1, 1, 1];
     const vertexShader = createShader(gl, gl.VERTEX_SHADER, vert_default);
     const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, frag_default);
     const program = createProgram(gl, vertexShader, fragmentShader);
     const positionAttributeLocation = gl.getAttribLocation(program, "a_position");
-    const colorAttributeLocation = gl.getAttribLocation(program, "a_color");
-    const matrixLocation = gl.getUniformLocation(program, "u_matrix");
-    const positionBuffer = createBuffer(gl, [
+    const normalAttributeLocation = gl.getAttribLocation(program, "a_normal");
+    const worldInverseTransposeMatrixLocation = gl.getUniformLocation(program, "u_worldInverseTransposeMatrix");
+    const projectWorldMatrixLocation = gl.getUniformLocation(program, "u_projectWorldMatrix");
+    const u_lightDirReversedLocation = gl.getUniformLocation(program, "u_lightDirReversed");
+    const positionBuffer = gl.createBuffer();
+    const normalBuffer = gl.createBuffer();
+    gl.useProgram(program);
+    gl.enable(gl.DEPTH_TEST);
+    gl.enable(gl.CULL_FACE);
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    setGeometry(gl);
+    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+    setNormals(gl);
+    gl.uniform3fv(u_lightDirReversedLocation, normalize([0, 0, 1]));
+    function draw() {
+      gl.clearColor(0, 0, 0, 0);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      let projectMatrix = m4.perspective(30 / 180 * Math.PI, gl.canvas.width / gl.canvas.height, 1, 2e3);
+      var camera = [0, 0, 500];
+      var target = [0, 0, 0];
+      var up = [0, 1, 0];
+      var cameraMatrix = m4.lookAt(camera, target, up);
+      var viewMatrix = m4.inverse(cameraMatrix);
+      var viewProjectionMatrix = m4.multiply(projectMatrix, viewMatrix);
+      let worldMatrix = m4.translation(translation[0], translation[1], translation[2]);
+      worldMatrix = m4.xRotate(worldMatrix, rotation[0]);
+      worldMatrix = m4.yRotate(worldMatrix, rotation[1]);
+      worldMatrix = m4.zRotate(worldMatrix, rotation[2]);
+      worldMatrix = m4.scale(worldMatrix, scale[0], scale[1], scale[2]);
+      let projectWorldMatrix = m4.multiply(viewProjectionMatrix, worldMatrix);
+      gl.uniformMatrix4fv(projectWorldMatrixLocation, false, projectWorldMatrix);
+      var worldInverseMatrix = m4.inverse(worldMatrix);
+      var worldInverseTransposeMatrix = m4.transpose(worldInverseMatrix);
+      gl.uniformMatrix4fv(worldInverseTransposeMatrixLocation, false, worldInverseTransposeMatrix);
+      gl.enableVertexAttribArray(positionAttributeLocation);
+      gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+      gl.vertexAttribPointer(positionAttributeLocation, 3, gl.FLOAT, false, 0, 0);
+      gl.enableVertexAttribArray(normalAttributeLocation);
+      gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+      gl.vertexAttribPointer(normalAttributeLocation, 3, gl.FLOAT, false, 0, 0);
+      gl.drawArrays(gl.TRIANGLES, 0, 16 * 6);
+    }
+    draw();
+    const inputX = document.getElementById("inputX");
+    const inputY = document.getElementById("inputY");
+    const inputZ = document.getElementById("inputZ");
+    const inputRX = document.getElementById("inputRX");
+    const inputRY = document.getElementById("inputRY");
+    const inputRZ = document.getElementById("inputRZ");
+    const inputSX = document.getElementById("inputSX");
+    const inputSY = document.getElementById("inputSY");
+    const inputSZ = document.getElementById("inputSZ");
+    function beforeDraw(cb) {
+      return () => {
+        cb();
+        draw();
+      };
+    }
+    inputX.oninput = beforeDraw(() => {
+      translation[0] = inputX.valueAsNumber / 100 * gl.canvas.width;
+    });
+    inputY.oninput = beforeDraw(() => {
+      translation[1] = inputY.valueAsNumber / 100 * gl.canvas.height;
+    });
+    inputZ.oninput = beforeDraw(() => {
+      translation[2] = inputZ.valueAsNumber;
+    });
+    inputRX.oninput = beforeDraw(() => {
+      const rotationDeg = 360 - ~~inputRX.value;
+      rotation[0] = rotationDeg * Math.PI / 180;
+    });
+    inputRY.oninput = beforeDraw(() => {
+      const rotationDeg = 360 - ~~inputRY.value;
+      rotation[1] = rotationDeg * Math.PI / 180;
+    });
+    inputRZ.oninput = beforeDraw(() => {
+      const rotationDeg = 360 - ~~inputRZ.value;
+      rotation[2] = rotationDeg * Math.PI / 180;
+    });
+    inputSX.oninput = beforeDraw(() => {
+      scale[0] = inputSX.valueAsNumber / 100;
+    });
+    inputSY.oninput = beforeDraw(() => {
+      scale[1] = inputSY.valueAsNumber / 100;
+    });
+    inputSZ.oninput = beforeDraw(() => {
+      scale[2] = inputSZ.valueAsNumber / 100;
+    });
+  }
+  main();
+  function setGeometry(gl) {
+    var positions = new Float32Array([
       0,
       0,
       0,
@@ -610,341 +688,312 @@
       150,
       0
     ]);
-    const colorBuffer = createBuffer(gl, [
-      200,
-      70,
-      120,
-      200,
-      70,
-      120,
-      200,
-      70,
-      120,
-      200,
-      70,
-      120,
-      200,
-      70,
-      120,
-      200,
-      70,
-      120,
-      200,
-      70,
-      120,
-      200,
-      70,
-      120,
-      200,
-      70,
-      120,
-      200,
-      70,
-      120,
-      200,
-      70,
-      120,
-      200,
-      70,
-      120,
-      200,
-      70,
-      120,
-      200,
-      70,
-      120,
-      200,
-      70,
-      120,
-      200,
-      70,
-      120,
-      200,
-      70,
-      120,
-      200,
-      70,
-      120,
-      80,
-      70,
-      200,
-      80,
-      70,
-      200,
-      80,
-      70,
-      200,
-      80,
-      70,
-      200,
-      80,
-      70,
-      200,
-      80,
-      70,
-      200,
-      80,
-      70,
-      200,
-      80,
-      70,
-      200,
-      80,
-      70,
-      200,
-      80,
-      70,
-      200,
-      80,
-      70,
-      200,
-      80,
-      70,
-      200,
-      80,
-      70,
-      200,
-      80,
-      70,
-      200,
-      80,
-      70,
-      200,
-      80,
-      70,
-      200,
-      80,
-      70,
-      200,
-      80,
-      70,
-      200,
-      70,
-      200,
-      210,
-      70,
-      200,
-      210,
-      70,
-      200,
-      210,
-      70,
-      200,
-      210,
-      70,
-      200,
-      210,
-      70,
-      200,
-      210,
-      200,
-      200,
-      70,
-      200,
-      200,
-      70,
-      200,
-      200,
-      70,
-      200,
-      200,
-      70,
-      200,
-      200,
-      70,
-      200,
-      200,
-      70,
-      210,
-      100,
-      70,
-      210,
-      100,
-      70,
-      210,
-      100,
-      70,
-      210,
-      100,
-      70,
-      210,
-      100,
-      70,
-      210,
-      100,
-      70,
-      210,
-      160,
-      70,
-      210,
-      160,
-      70,
-      210,
-      160,
-      70,
-      210,
-      160,
-      70,
-      210,
-      160,
-      70,
-      210,
-      160,
-      70,
-      70,
-      180,
-      210,
-      70,
-      180,
-      210,
-      70,
-      180,
-      210,
-      70,
-      180,
-      210,
-      70,
-      180,
-      210,
-      70,
-      180,
-      210,
-      100,
-      70,
-      210,
-      100,
-      70,
-      210,
-      100,
-      70,
-      210,
-      100,
-      70,
-      210,
-      100,
-      70,
-      210,
-      100,
-      70,
-      210,
-      76,
-      210,
-      100,
-      76,
-      210,
-      100,
-      76,
-      210,
-      100,
-      76,
-      210,
-      100,
-      76,
-      210,
-      100,
-      76,
-      210,
-      100,
-      140,
-      210,
-      80,
-      140,
-      210,
-      80,
-      140,
-      210,
-      80,
-      140,
-      210,
-      80,
-      140,
-      210,
-      80,
-      140,
-      210,
-      80,
-      90,
-      130,
-      110,
-      90,
-      130,
-      110,
-      90,
-      130,
-      110,
-      90,
-      130,
-      110,
-      90,
-      130,
-      110,
-      90,
-      130,
-      110,
-      160,
-      160,
-      220,
-      160,
-      160,
-      220,
-      160,
-      160,
-      220,
-      160,
-      160,
-      220,
-      160,
-      160,
-      220,
-      160,
-      160,
-      220
-    ], Uint8Array);
-    gl.useProgram(program);
-    gl.enable(gl.DEPTH_TEST);
-    gl.enable(gl.CULL_FACE);
-    function draw() {
-      gl.clearColor(0, 0, 0, 0);
-      gl.clear(gl.COLOR_BUFFER_BIT);
-      const num = 10;
-      let viewMatrix2;
-      const calcModelMatrix = (i) => {
-        let matrix = m4.translation(0, 0, 0);
-        matrix = m4.yRotate(matrix, deg2rad(i * (360 / num) + rotateY));
-        matrix = m4.translate(matrix, 0, 80, -300);
-        matrix = m4.xRotate(matrix, deg2rad(180));
-        if (i === 0) {
-          const target = m4.vectorMultiply([0, 0, 0, 1], matrix);
-          viewMatrix2 = m4.inverse(m4.lookAt(cameraPosition, target, up));
-        }
-        return matrix;
-      };
-      for (let i = 0; i < num; i++) {
-        let matrix = m4.perspective(deg2rad(45), gl.canvas.width / gl.canvas.height, 1, 2e3);
-        let modelMatrix = calcModelMatrix(i);
-        matrix = m4.multiply(matrix, viewMatrix2);
-        matrix = m4.multiply(matrix, modelMatrix);
-        gl.uniformMatrix4fv(matrixLocation, false, matrix);
-        gl.enableVertexAttribArray(positionAttributeLocation);
-        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-        gl.vertexAttribPointer(positionAttributeLocation, 3, gl.FLOAT, false, 0, 0);
-        gl.enableVertexAttribArray(colorAttributeLocation);
-        gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-        gl.vertexAttribPointer(colorAttributeLocation, 3, gl.UNSIGNED_BYTE, true, 0, 0);
-        gl.drawArrays(gl.TRIANGLES, 0, 16 * 6);
-      }
+    var matrix = m4.xRotation(Math.PI);
+    matrix = m4.translate(matrix, -50, -75, -15);
+    for (var ii = 0; ii < positions.length; ii += 3) {
+      var vector = m4.transformPoint(matrix, [
+        positions[ii + 0],
+        positions[ii + 1],
+        positions[ii + 2],
+        1
+      ]);
+      positions[ii + 0] = vector[0];
+      positions[ii + 1] = vector[1];
+      positions[ii + 2] = vector[2];
     }
-    draw();
-    const inputX = document.getElementById("inputX");
-    function beforeDraw(cb) {
-      return () => {
-        cb();
-        draw();
-      };
-    }
-    inputX.oninput = beforeDraw(() => {
-      rotateY = inputX.valueAsNumber;
-    });
+    gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
   }
-  main();
+  function setNormals(gl) {
+    var normals = new Float32Array([
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      -1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      -1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      -1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      -1,
+      0,
+      -1,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      -1,
+      0,
+      0
+    ]);
+    gl.bufferData(gl.ARRAY_BUFFER, normals, gl.STATIC_DRAW);
+  }
 })();
