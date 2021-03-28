@@ -18,3 +18,8 @@ TODO: 回顾 GAMES202 实时阴影 1（shadow mapping，PCSS）
 ## PCF
 
 ## PCSS
+
+## 想法
+
+WebGL 里面实现手影
+
