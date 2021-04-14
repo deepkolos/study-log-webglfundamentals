@@ -30,4 +30,5 @@
 2021-4-7: WebGL 天空盒\
 2021-4-11: WebGL 蒙皮（简单阅读\
 2021-4-12: WebGL 雾\
-2021-4-13: WebGL Picking (40%)\
+2021-4-13: WebGL Picking\
+2021-4-14: WebGL 文字 - HTML\
