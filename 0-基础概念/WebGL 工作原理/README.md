@@ -13,7 +13,7 @@ WebGL 在 GPU 上的工作基本上分为两部分，第一部分是将顶点（
   -175,100    25 ,250            25/400 * 2 - 1 =-0.875, -250/300 * 2 + 1 =-0.666
 
 颜色空间
-  (0 + 1) * 0.5 = -0.5, (0.666 + 1) * 0.5 = 0.833
+  (0 + 1) * 0.5 = 0.5, (0.666 + 1) * 0.5 = 0.833
   以此类推 (x + 1) * 0.5, (y + 1) * 0.5
 
 ## 关于buffer和attribute的代码是干什么的？
@@ -31,3 +31,7 @@ gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
 // 单位个数永远是 1 到 4 之间。
 gl.vertexAttribPointer(colorLocation, size, type, normalize, stride, offset)
 ```
+
+// 片断着色器没有默认精度，所以我们需要设置一个精度
+// mediump是一个不错的默认值，代表“medium precision”（中等精度）
+precision mediump float;
