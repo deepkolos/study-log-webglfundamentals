@@ -37,6 +37,7 @@
 2021-4-20: WebGL 文字 - 使用字形纹理\
 2021-4-25: WebGL Ramp Textures（简单阅读\
 2021-4-27: WebGL GPGPU（30%\
-2021-5-24: WebGL GPGPU（RNG都夺冠了，比赛都看完了，该继续学习了，之前的还得重新回顾\
+2021-5-24: WebGL GPGPU（RNG 都夺冠了，比赛都看完了，该继续学习了，之前的还得重新回顾\
 2021-5-25: WebGL Smallest Programs\
 2021-5-27: WebGL Drawing Without Data（50%
+2021-8-6: 因为一些事情断了2个月；重启，以查找为主，建立更多应用上的关联记忆，结合threejs、glas、shree，目标是掌握完整的渲染资源+流程管理，封装出gltf模型渲染器，支持asc+tsc分别构建出wasm,js

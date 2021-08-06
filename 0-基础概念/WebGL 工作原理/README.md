@@ -35,3 +35,12 @@ gl.vertexAttribPointer(colorLocation, size, type, normalize, stride, offset)
 // 片断着色器没有默认精度，所以我们需要设置一个精度
 // mediump是一个不错的默认值，代表“medium precision”（中等精度）
 precision mediump float;
+
+## 问题
+
+每次draw都需要重新把attribute和buffer重新绑定并且配置读取方式么？
+
+
+> 如果每个类型的数据都用一个缓冲存储，stride 和 offset 都是 0 。 对 stride 来说 0 表示 “用符合单位类型和单位个数的大小”。 对 offset 来说 0 表示从缓冲起始位置开始读取。 它们使用 0 以外的值时会复杂得多，虽然这样会取得一些性能能上的优势， 但是一般情况下并不值得，除非你想充分压榨WebGL的性能。
+
+为什么非零offset会有性能优势？
